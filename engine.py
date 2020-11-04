@@ -45,13 +45,14 @@ class Search:
         self.nodes = 0
 
     def search(self, position, history = ()):
+        self.nodes = 0
         self.history = set(history)
         for depth in range(1, 1000):
             for move in position.moves():
                 val = self.bound(position.move(move), -math.inf, math.inf, depth)
                 if val < best and (position.turn == 0 or position.turn == 2): best_move = move
                 if val > best and (position.turn == 1 or position.turn == 3): best_move = move
-        yield best_move
+        yield depth, self.tp_move.get(position), self.tp_score.get((position, depth, True)).lower
 
     def bound(self, position, alpha, beta, depth, root = True):
         self.nodes += 1
