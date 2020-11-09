@@ -64,3 +64,38 @@ class Position(namedtuple('Position', 'board score turn pieces')):
             print("|" + out + "\n")
             print("+-----+-----+-----+-----+-----+-----+-----+-----+\n")
             out = ""
+
+class Searcher:
+    def __init__(self):
+        self.history = set()
+        self.nodes = 0
+
+    def bound(self, position, depth, history = ()):
+        self.nodes = 0
+        positive_team = (position.turn in (0, 3))
+        if positive_team: best_val = 99999
+        else: best_val = -99999
+        best_move = []
+        for move in position.moves():
+            new_val = self.search(position.move(move), -100000, 100000, depth - 1);
+            if (positive_team and new_val < best_val) or (not positive_team and new_val > best_val):
+                best_move = move
+                best_val = new_val
+        return [best_move, self.nodes]
+
+    def search(self, position, alpha, beta, depth):
+        self.nodes += 1
+        if depth == 0: return -position.score
+        if position.turn in (0, 3):
+            best = 99999
+            for move in position.moves():
+                best = min(best, self.search(position.move(move), alpha, beta, depth - 1))
+                beta = min(beta, best)
+                if beta <= alpha: return best
+        else:
+            best = -99999;
+            for move in position.moves():
+                best = max(best, self.search(position.move(move), alpha, beta, depth - 1))
+                alpha = max(alpha, best)
+                if beta <= alpha: return best
+        return best
