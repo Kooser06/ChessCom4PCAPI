@@ -83,6 +83,7 @@ class Searcher:
 
     def bound(self, position, depth, history):
         self.nodes = 0
+        self.history = set(history)
         positive_team = (position.turn in (0, 3))
         if positive_team: best_val = 99999
         else: best_val = -99999
@@ -94,19 +95,20 @@ class Searcher:
                 best_val = new_val
         return [best_move, self.nodes]
 
-    def search(self, position, alpha, beta, depth):
+    def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
+        if not root and position in self.history: return 0
         if depth == 0: return -position.score
         if position.turn in (0, 3):
             best = 99999
             for move in position.moves():
-                best = min(best, self.search(position.move(move), alpha, beta, depth - 1))
+                best = min(best, self.search(position.move(move), alpha, beta, depth - 1, False))
                 beta = min(beta, best)
                 if beta <= alpha: return best
         else:
             best = -99999;
             for move in position.moves():
-                best = max(best, self.search(position.move(move), alpha, beta, depth - 1))
+                best = max(best, self.search(position.move(move), alpha, beta, depth - 1, False))
                 alpha = max(alpha, best)
                 if beta <= alpha: return best
         return best
