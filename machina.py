@@ -1,15 +1,11 @@
 #!/usr/bin/env pypy
 # -*- coding: utf-8 -*-
 
-import api, time, json
 from itertools import count
 from collections import namedtuple
-from http.client import IncompleteRead
 
 colors = (3, 2, 1, 0)
 pvs = (100, 100, 100, 100, 290, 350, 500, 60000)
-MATE_LOWER = pvs[7] - 10 * pvs[6]
-MATE_UPPER = pvs[7] + 10 * pvs[6]
 promotion = [(21, 22, 23, 24, 25, 26, 27, 28), (28, 38, 48, 58, 68, 78, 88, 98), (91, 92, 93, 94, 95, 96, 97, 98), (21, 31, 41, 51, 61, 71, 81, 91)]
 directions = [(-10, -11, -9), (1, -9, 11), (10, 11, 9), (-1, -11, 9), (12, 21, -12, -21, 19, -19, 8, -8), (-11, 11, -9, 9), (1, -1, 10, -10), (1, -1, 10, -10, -11, 11, -9, 9)]
 valid_keys = (21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 51, 52, 53, 54, 55, 56, 57, 58, 61, 62, 63, 64, 65, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 78, 81, 82, 83, 84, 85, 86, 87, 88, 91, 92, 93, 94, 95, 96, 97, 98)
@@ -42,9 +38,7 @@ class Position(namedtuple('Position', 'board score turn pieces')):
         mate, val, board, pcs = 0, self.score, self.board[:], self.pieces[:]
         pc_key = self.__get_key(pcs, [self.turn, board[move[0]][1], move[0], 0])
         if move[2] == 1:
-            if board[move[1]][1] == 7 and self.turn in (0, 3): mate = MATE_UPPER
-            elif board[move[1]][1] == 7 and self.turn in (1, 2): mate = MATE_LOWER
-            elif self.turn in (0, 3): val += pvs[board[move[1]][1]]
+            if self.turn in (0, 3): val += pvs[board[move[1]][1]]
             else: val -= pvs[board[move[1]][1]]
         if board[move[0]][1] in (0, 1, 2, 3) and move[1] in promotion[board[move[0]][0]]:
             board[move[0]] = (board[move[0]][0], 6, board[move[0]][2])
@@ -60,8 +54,6 @@ class Position(namedtuple('Position', 'board score turn pieces')):
             pcs[dead_key] = [board[move[1]][0], board[move[1]][1], board[move[1]][2], 1]
         board[move[1]] = (board[move[0]][0], board[move[0]][1], move[1])
         board[move[0]] = 0
-        if mate == MATE_LOWER: val = MATE_LOWER
-        if mate == MATE_UPPER: val = MATE_UPPER
         return Position(board, val, (self.turn + 1) % 4, pcs)
 
     def __get_key(self, array, val):
@@ -108,7 +100,6 @@ class Searcher:
 
     def search(self, position, alpha, beta, depth):
         self.nodes += 1
-        if position.score == MATE_UPPER or position.score == MATE_LOWER: return position.score
         if depth == 0: return -position.score
         if position.turn in (0, 3):
             best = 99999
