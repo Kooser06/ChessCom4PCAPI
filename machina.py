@@ -1,16 +1,22 @@
 #!/usr/bin/env pypy
 # -*- coding: utf-8 -*-
 
+import api, time, json
 from itertools import count
 from collections import namedtuple
+from http.client import IncompleteRead
 
 colors = (3, 2, 1, 0)
 pvs = (100, 100, 100, 100, 290, 350, 500, 60000)
+MATE_LOWER = pvs[7] - 10 * pvs[6]
+MATE_UPPER = pvs[7] + 10 * pvs[6]
 promotion = [(21, 22, 23, 24, 25, 26, 27, 28), (28, 38, 48, 58, 68, 78, 88, 98), (91, 92, 93, 94, 95, 96, 97, 98), (21, 31, 41, 51, 61, 71, 81, 91)]
 directions = [(-10, -11, -9), (1, -9, 11), (10, 11, 9), (-1, -11, 9), (12, 21, -12, -21, 19, -19, 8, -8), (-11, 11, -9, 9), (1, -1, 10, -10), (1, -1, 10, -10, -11, 11, -9, 9)]
 valid_keys = (21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 51, 52, 53, 54, 55, 56, 57, 58, 61, 62, 63, 64, 65, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 78, 81, 82, 83, 84, 85, 86, 87, 88, 91, 92, 93, 94, 95, 96, 97, 98)
 initial = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (1, 6, 21), (1, 1, 22), 0, 0, (2, 7, 25), (2, 5, 26), (2, 4, 27), (2, 6, 28), 0, 0, (1, 4, 31), (1, 1, 32), 0, 0, (2, 2, 35), (2, 2, 36), (2, 2, 37), (2, 2, 38), 0, 0, (1, 5, 41), (1, 1, 42), 0, 0, 0, 0, 0, 0, 0, 0, (1, 7, 51), (1, 1, 52), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (3, 3, 67), (3, 7, 68), 0, 0, 0, 0, 0, 0, 0, 0, (3, 3, 77), (3, 5, 78), 0, 0, (0, 0, 81), (0, 0, 82), (0, 0, 83), (0, 0, 84), 0, 0, (3, 3, 87), (3, 4, 88), 0, 0, (0, 6, 91), (0, 4, 92), (0, 5, 93), (0, 7, 94), 0, 0, (3, 3, 97), (3, 6, 98), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 pieces = [[1, 6, 21, 0], [1, 4, 31, 0], [1, 5, 41, 0], [1, 7, 51, 0], [1, 1, 22, 0], [1, 1, 32, 0], [1, 1, 42, 0], [1, 1, 52, 0], [2, 7, 25, 0], [2, 5, 26, 0], [2, 4, 27, 0], [2, 6, 28, 0], [2, 2, 35, 0], [2, 2, 36, 0], [2, 2, 37, 0], [2, 2, 38, 0], [0, 0, 81, 0], [0, 0, 82, 0], [0, 0, 83, 0], [0, 0, 84, 0], [0, 6, 91, 0], [0, 4, 92, 0], [0, 5, 93, 0], [0, 7, 94, 0], [3, 3, 67, 0], [3, 7, 68, 0], [3, 3, 77, 0], [3, 5, 78, 0], [3, 3, 87, 0], [3, 4, 88, 0], [3, 3, 97, 0], [3, 6, 98, 0]]
+revert_cord = {"d11": 21, "e11": 22, 'f11': 23, "g11": 24, "h11": 25, "i11": 26, "j11": 27, "k11": 28, "d10": 31, "e10":32, 'f10': 33, "g10": 34, "h10": 35, "i10": 36, "j10": 37, "k10": 38, "d9": 41, "e9": 42, 'f9': 43, "g9": 44, "h9": 45, "i9": 46, "j9": 47, "k9": 48, "d8": 51, "e8": 52, 'f8': 53, "g8": 54, "h8": 55, "i8": 56, "j8": 57, "k8": 58, "d7": 61, "e7": 62, 'f7': 63, "g7": 64, "h7": 65, "i7": 66, "j7": 67, "k7": 68, "d6": 71, "e6": 72, 'f6': 73, "g6": 74, "h6": 75, "i6": 76, "j6": 77, "k6": 78, "d5": 81, "e5": 82, 'f5': 83, "g5": 84, "h5": 85, "i5": 86, "j5": 87, "k5": 88, "d4": 91, "e4": 92, 'f4': 93, "g4": 94, "h4": 95, "i4": 96, "j4": 97, "k4": 98}
+coordinates = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "d11", "e11", 'f11', "g11", "h11", "i11", "j11", "k11", 0, 0, "d10", "e10", 'f10', "g10", "h10", "i10", "j10", "k10", 0, 0, "d9", "e9", 'f9', "g9", "h9", "i9", "j9", "k9", 0, 0, "d8", "e8", 'f8', "g8", "h8", "i8", "j8", "k8", 0, 0, "d7", "e7", 'f7', "g7", "h7", "i7", "j7", "k7", 0, 0, "d6", "e6", 'f6', "g6", "h6", "i6", "j6", "k6", 0, 0, "d5", "e5", 'f5', "g5", "h5", "i5", "j5", "k5", 0, 0, "d4", "e4", 'f4', "g4", "h4", "i4", "j4", "k4", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 class Position(namedtuple('Position', 'board score turn pieces')):
     def moves(self):
@@ -26,14 +32,16 @@ class Position(namedtuple('Position', 'board score turn pieces')):
                     if piece[1] in (0, 1, 2, 3) and location in (-10, 10, 1, -1) and captured == 1: break
                     if piece[1] in (0, 1, 2, 3) and location in (11, -11, 9, -9) and captured == 0: break 
                     ret.append((piece[2], key, captured))
-                    if piece[1] in (0, 1, 2, 3, 4, 7): break
+                    if piece[1] in (0, 1, 2, 3, 4, 7) or captured == 1: break
         return ret
 
     def move(self, move):
-        val, board, pcs = self.score, self.board[:], self.pieces[:]
+        mate, val, board, pcs = 0, self.score, self.board[:], self.pieces[:]
         pc_key = self.__get_key(pcs, [self.turn, board[move[0]][1], move[0], 0])
         if move[2] == 1:
-            if self.turn in (0, 3): val += pvs[board[move[1]][1]]
+            if board[move[1]][1] == 7 and self.turn in (0, 3): mate = MATE_UPPER
+            elif board[move[1]][1] == 7 and self.turn in (1, 2): mate = MATE_LOWER
+            elif self.turn in (0, 3): val += pvs[board[move[1]][1]]
             else: val -= pvs[board[move[1]][1]]
         if board[move[0]][1] in (0, 1, 2, 3) and move[1] in promotion[board[move[0]][0]]:
             board[move[0]] = (board[move[0]][0], 6, board[move[0]][2])
@@ -45,6 +53,8 @@ class Position(namedtuple('Position', 'board score turn pieces')):
             pcs[dead_key] = [board[move[1]][0], board[move[1]][1], board[move[1]][2], 1]
         board[move[1]] = (board[move[0]][0], board[move[0]][1], move[1])
         board[move[0]] = 0
+        if mate == MATE_LOWER: val = MATE_LOWER
+        if mate == MATE_UPPER: val = MATE_UPPER
         return Position(board, val, (self.turn + 1) % 4, pcs)
 
     def __get_key(self, array, val):
@@ -73,7 +83,7 @@ class Searcher:
         self.history = set()
         self.nodes = 0
 
-    def bound(self, position, depth, history = ()):
+    def bound(self, position, depth, history):
         self.nodes = 0
         positive_team = (position.turn in (0, 3))
         if positive_team: best_val = 99999
@@ -88,6 +98,7 @@ class Searcher:
 
     def search(self, position, alpha, beta, depth):
         self.nodes += 1
+        if position.score == MATE_UPPER or position.score == MATE_LOWER: return position.score
         if depth == 0: return -position.score
         if position.turn in (0, 3):
             best = 99999
