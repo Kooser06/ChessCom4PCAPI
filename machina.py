@@ -42,12 +42,8 @@ class Position(namedtuple('Position', 'board score turn pieces')):
             else: val -= pvs[board[move[1]][1]]
         if board[move[0]][1] in (0, 1, 2, 3) and move[1] in promotion[board[move[0]][0]]:
             board[move[0]] = (board[move[0]][0], 6, board[move[0]][2])
-            if self.turn in (0, 3):
-                val -= pvs[0]
-                val += pvs[6]
-            else:
-                val += pvs[0]
-                val -= pvs[6]
+            if self.turn in (0, 3): val += (pvs[6] - pvs[0])
+            else: val -= (pvs[6] - pvs[0])
         pcs[pc_key] = [self.turn, board[move[0]][1], move[1], 0]
         if move[2] == 1:
             dead_key = self.__get_key(pcs, [board[move[1]][0], board[move[1]][1], board[move[1]][2], 0])
