@@ -31,7 +31,7 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
                     else: captured = 1
                     if piece[1] in (0, 1, 2, 3) and location in (-10, 10, 1, -1) and captured == 1: break
                     if piece[1] in (0, 1, 2, 3) and location in (11, -11, 9, -9) and captured == 0: break
-                    if self.board[key][1] == 7: is_final = True
+                    if captured == 1 and self.board[key][1] == 7: is_final = True
                     else: is_final = False
                     ret.append((piece[2], key, captured, is_final))
                     if piece[1] in (0, 1, 2, 3, 4, 7) or captured == 1: break
@@ -85,7 +85,7 @@ class Searcher:
 
     def bound(self, position, depth, history=()):
         self.nodes = 0
-        self.history = set(history)
+        self.history = history
         positive_team = (position.turn in (0, 3))
         if positive_team: best_val = 99999
         else: best_val = -99999
