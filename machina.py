@@ -18,7 +18,7 @@ coordinates = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "d
 ###############################################################################
 # Chaturaji Logic
 ###############################################################################
-class Position(namedtuple('Position', 'board score turn pieces')):
+class Position(namedtuple('Position', 'board score turn pieces is_final')):
     def moves(self):
         ret = []
         for piece in self.pieces:
@@ -30,8 +30,10 @@ class Position(namedtuple('Position', 'board score turn pieces')):
                     elif self.board[key][0] == self.turn or self.board[key][0] == colors[self.turn]: break
                     else: captured = 1
                     if piece[1] in (0, 1, 2, 3) and location in (-10, 10, 1, -1) and captured == 1: break
-                    if piece[1] in (0, 1, 2, 3) and location in (11, -11, 9, -9) and captured == 0: break 
-                    ret.append((piece[2], key, captured))
+                    if piece[1] in (0, 1, 2, 3) and location in (11, -11, 9, -9) and captured == 0: break
+                    if self.board[key][1] == 7: is_final = True
+                    else: is_final = False
+                    ret.append((piece[2], key, captured, is_final))
                     if piece[1] in (0, 1, 2, 3, 4, 7) or captured == 1: break
         return ret
 
@@ -50,7 +52,7 @@ class Position(namedtuple('Position', 'board score turn pieces')):
             else: val -= pvs[board[move[1]][1]]
         board[move[1]] = (board[move[0]][0], board[move[0]][1], move[1])
         board[move[0]] = 0
-        return Position(board, val, (self.turn + 1) % 4, pcs)
+        return Position(board, val, (self.turn + 1) % 4, pcs, move[3])
 
     def __get_key(self, array, val):
         for key, value in enumerate(array): 
@@ -98,7 +100,7 @@ class Searcher:
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
         if not root and position in self.history: return 0
-        if depth == 0: return -position.score
+        if depth == 0 or position.is_final: return -position.score
         if position.turn in (0, 3):
             best = 99999
             for move in position.moves():
