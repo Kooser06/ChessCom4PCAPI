@@ -35,7 +35,7 @@ class Position(namedtuple('Position', 'board score turn pieces')):
         return ret
 
     def move(self, move):
-        mate, val, board, pcs = 0, self.score, self.board[:], self.pieces[:]
+        val, board, pcs = self.score, self.board[:], self.pieces[:]
         pc_key = self.__get_key(pcs, [self.turn, board[move[0]][1], move[0], 0])
         if board[move[0]][1] in (0, 1, 2, 3) and move[1] in promotion[board[move[0]][0]]:
             board[move[0]] = (board[move[0]][0], 6, board[move[0]][2])
