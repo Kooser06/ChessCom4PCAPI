@@ -1,6 +1,7 @@
 #!/usr/bin/env pypy
 # -*- coding: utf-8 -*-
 
+import api, time, json
 from itertools import count
 from collections import namedtuple
 
@@ -80,7 +81,7 @@ class Searcher:
         self.history = set()
         self.nodes = 0
 
-    def bound(self, position, depth, history):
+    def bound(self, position, depth, history=()):
         self.nodes = 0
         self.history = set(history)
         positive_team = (position.turn in (0, 3))
