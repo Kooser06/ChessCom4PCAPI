@@ -122,7 +122,7 @@ class Searcher:
         if alpha < stand_pat: alpha = stand_pat
         for move in position.moves():
             if move[2] != 1: continue
-            score = -self.quiesce(position.move(move), -beta, -alpha)
+            score = -self.quiesce(position.move(move), beta, alpha)
             if score >= beta: return beta
             if score > alpha: alpha = score
         return alpha
