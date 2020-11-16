@@ -100,7 +100,7 @@ class Searcher:
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
         if not root and position in self.history: return 0
-        if depth == 0 or position.is_final: return -position.score
+        if depth == 0 or position.is_final: return -self.quiesce(position, alpha, beta)
         if position.turn in (0, 3):
             best = 99999
             for move in position.moves():
@@ -114,3 +114,15 @@ class Searcher:
                 alpha = max(alpha, best)
                 if beta <= alpha: return best
         return best
+
+    def quiesce(self, position, alpha, beta):
+        if position.is_final: return position.score
+        stand_pat = position.score
+        if stand_pat >= beta: return beta
+        if alpha < stand_pat: alpha = stand_pat
+        for move in position.moves():
+            if move[2] != 1: continue
+            score = -self.quiesce(position.move(move), -beta, -alpha)
+            if score >= beta: return beta
+            if score > alpha: alpha = score
+        return alpha
