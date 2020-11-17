@@ -111,12 +111,12 @@ class Searcher:
         return bestscore
 
     def quiesce(self, position, alpha, beta):
-        if position.is_final: return position.score
+        if position.is_final: return position.score # this position is final so just return the evaluation.
         stand_pat = position.score
         if stand_pat >= beta: return beta
         if alpha < stand_pat: alpha = stand_pat
         for move in position.moves:
-            if move[2] != 1: continue
+            if move[2] != 1: continue # continue through the moves until we encounter another capture.
             if position.turn in (0, 2): score = -self.quiesce(position.move(move), -beta, -alpha)
             else: score = self.quiesce(position.move(move), alpha, beta)
             if score >= beta: return beta
