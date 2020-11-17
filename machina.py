@@ -79,6 +79,7 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
 # Search Logic
 ###############################################################################
 upper, lower, exact = 1, -1, 0
+Entry = namedtuple('Entry', 'value valid depth flag')
 
 class Searcher:
     def __init__(self):
