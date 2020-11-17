@@ -100,6 +100,12 @@ l) or (not positive_team and new_val > best_val):
 
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
+        entry = self.lookup(position.hash())
+        if entry.valid and entry.depth >= depth:
+            if entry.flag == exact: return entry.value
+            elif entry.flag == lower: alpha = max(alpha, entry.value)
+            elif entry.flag == upper: beta = min(beta, entry.value)
+            if alpha >= beta: return entry.value
         if position in history and not root: return 0 # prevent a three-fold repetition moves when the engine is winning.
         bestscore = -99999
         if depth == 0: return self.quiesce(position, alpha, beta);
