@@ -97,6 +97,18 @@ class Searcher:
                 best_val = new_val
         return [best_move, self.nodes]
 
+    def look(self, position, alpha, beta, depth, root=True):
+        bestscore = -99999
+        if depth == 0: return quiesce(position, alpha, beta);
+        for move in position.moves:
+            if position.turn in (0, 2): score = -self.look(position.move(move), -beta, -alpha, depth - 1)
+            else: score = self.look(position.move(move), alpha, beta, depth - 1)
+            if score >= beta: return score # fail-soft beta-cutoff
+            if score > bestscore:
+                bestscore = score
+                if score > alpha: alpha = score
+        return bestscore
+
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
         if not root and position in self.history: return 0
