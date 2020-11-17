@@ -97,44 +97,28 @@ class Searcher:
                 best_val = new_val
         return [best_move, self.nodes]
 
-    def look(self, position, alpha, beta, depth, root=True):
+    def search(self, position, alpha, beta, depth, root=True):
+        self.nodes += 1
         bestscore = -99999
-        if depth == 0: return quiesce(position, alpha, beta);
+        if depth == 0: return self.quiesce(position, alpha, beta);
         for move in position.moves:
-            if position.turn in (0, 2): score = -self.look(position.move(move), -beta, -alpha, depth - 1)
-            else: score = self.look(position.move(move), alpha, beta, depth - 1)
+            if position.turn in (0, 2): score = -self.search(position.move(move), -beta, -alpha, depth - 1, False)
+            else: score = self.search(position.move(move), alpha, beta, depth - 1, False)
             if score >= beta: return score # fail-soft beta-cutoff
             if score > bestscore:
                 bestscore = score
                 if score > alpha: alpha = score
         return bestscore
 
-    def search(self, position, alpha, beta, depth, root=True):
-        self.nodes += 1
-        if not root and position in self.history: return 0
-        if depth == 0 or position.is_final: return -self.quiesce(position, alpha, beta)
-        if position.turn in (0, 3):
-            best = 99999
-            for move in position.moves():
-                best = min(best, self.search(position.move(move), alpha, beta, depth - 1, False))
-                beta = min(beta, best)
-                if beta <= alpha: return best
-        else:
-            best = -99999;
-            for move in position.moves():
-                best = max(best, self.search(position.move(move), alpha, beta, depth - 1, False))
-                alpha = max(alpha, best)
-                if beta <= alpha: return best
-        return best
-
     def quiesce(self, position, alpha, beta):
         if position.is_final: return position.score
         stand_pat = position.score
         if stand_pat >= beta: return beta
         if alpha < stand_pat: alpha = stand_pat
-        for move in position.moves():
+        for move in position.moves:
             if move[2] != 1: continue
-            score = -self.quiesce(position.move(move), beta, alpha)
+            if position.turn in (0, 2): score = -self.quiesce(position.move(move), -beta, -alpha)
+            else: score = self.quiesce(position.move(move), alpha, beta)
             if score >= beta: return beta
             if score > alpha: alpha = score
         return alpha
