@@ -95,17 +95,18 @@ class Searcher:
             bestscore = -99999
             best_move = []
             for move in position.moves():
-                score = self.search(position.move(move), -100000, 100000, depth - 1);
+                if position.turn in (0, 2): score = -self.search(position.move(move), 100000, -100000, depth - 1)
+                else: score = self.search(position.move(move), -100000, 100000, depth - 1)
                 if score > bestscore:
                     bestscore = score
                     best_move = move
             yield depth, best_move, self.nodes
 
     def lookup(self, position):
-        return self.tp_score.get((position), Entry(0, False, 0, 0))
+        return self.tp_score.get((position), Entry(0, False, 0, 0)) # get the transposition table entry.
 
     def add(self, position, entry):
-        self.tp_score[position] = entry
+        self.tp_score[position] = entry # store the transposition table entry.
 
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
