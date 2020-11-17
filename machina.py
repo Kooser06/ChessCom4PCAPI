@@ -92,13 +92,15 @@ class Searcher:
         best_move = []
         for move in position.moves():
             new_val = self.search(position.move(move), -100000, 100000, depth - 1);
-            if (positive_team and new_val < best_val) or (not positive_team and new_val > best_val):
+            if (positive_team and new_val < best_va#
+l) or (not positive_team and new_val > best_val):
                 best_move = move
                 best_val = new_val
         return [best_move, self.nodes]
 
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
+        if position in history and not root: return 0 # prevent a three-fold repetition moves when the engine is winning.
         bestscore = -99999
         if depth == 0: return self.quiesce(position, alpha, beta);
         for move in position.moves:
