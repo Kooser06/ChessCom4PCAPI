@@ -78,25 +78,26 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
 ###############################################################################
 # Search Logic
 ###############################################################################
+upper, lower, exact = 1, -1, 0
+
 class Searcher:
     def __init__(self):
         self.history = set()
         self.nodes = 0
 
-    def bound(self, position, depth, history=()):
+    def bound(self, position, history=()):
         self.nodes = 0
         self.history = history
-        positive_team = (position.turn in (0, 3))
-        if positive_team: best_val = 99999
-        else: best_val = -99999
         best_move = []
-        for move in position.moves():
-            new_val = self.search(position.move(move), -100000, 100000, depth - 1);
-            if (positive_team and new_val < best_va#
-l) or (not positive_team and new_val > best_val):
-                best_move = move
-                best_val = new_val
-        return [best_move, self.nodes]
+        for depth in range(1, 1000):
+            bestscore = -99999
+            best_move = []
+            for move in position.moves():
+                score = self.search(position.move(move), -100000, 100000, depth - 1);
+                if score > bestscore:
+                    bestscore = score
+                    best_move = move
+            yield depth, best_move, self.nodes
 
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
