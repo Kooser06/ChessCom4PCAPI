@@ -100,6 +100,7 @@ l) or (not positive_team and new_val > best_val):
 
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
+        alphaOriginal = alpha
         entry = self.lookup(position.hash())
         if entry.valid and entry.depth >= depth:
             if entry.flag == exact: return entry.value
@@ -116,6 +117,12 @@ l) or (not positive_team and new_val > best_val):
             if score > bestscore:
                 bestscore = score
                 if score > alpha: alpha = score
+        entry.value = value
+        if value <= alphaOriginal: entry.flag = upper
+        elif value >= beta: entry.flag = lower
+        else: entry.flag = exact
+        entry.depth = depth	
+        self.update(position.hash(), entry)
         return bestscore
 
     def quiesce(self, position, alpha, beta):
