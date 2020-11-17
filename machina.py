@@ -83,6 +83,7 @@ Entry = namedtuple('Entry', 'value valid depth flag')
 
 class Searcher:
     def __init__(self):
+        self.tp_score = {}
         self.history = set()
         self.nodes = 0
 
@@ -100,10 +101,16 @@ class Searcher:
                     best_move = move
             yield depth, best_move, self.nodes
 
+    def lookup(self, position):
+        return self.tp_score.get((position), Entry(0, False, 0, 0))
+
+    def add(self, position, entry):
+        self.tp_score[position] = entry
+
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
         alphaOriginal = alpha
-        entry = self.lookup(position.hash())
+        entry = self.lookup(position)
         if entry.valid and entry.depth >= depth:
             if entry.flag == exact: return entry.value
             elif entry.flag == lower: alpha = max(alpha, entry.value)
@@ -119,12 +126,10 @@ class Searcher:
             if score > bestscore:
                 bestscore = score
                 if score > alpha: alpha = score
-        entry.value = value
-        if value <= alphaOriginal: entry.flag = upper
-        elif value >= beta: entry.flag = lower
-        else: entry.flag = exact
-        entry.depth = depth	
-        self.update(position.hash(), entry)
+        if value <= alphaOriginal: flag = upper
+        elif value >= beta: flag = lower
+        else: flag = exact
+        self.add(position, Entry(value, True, depth, flag))
         return bestscore
 
     def quiesce(self, position, alpha, beta):
