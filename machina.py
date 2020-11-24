@@ -1,12 +1,11 @@
 #!/usr/bin/env pypy
 # -*- coding: utf-8 -*-
 
-import api, time, json
+import api, time, json, evala
 from itertools import count
 from collections import namedtuple
 
 colors = (3, 2, 1, 0)
-pvs = (100, 100, 100, 100, 325, 425, 500, 60000)
 promotion = [(21, 22, 23, 24, 25, 26, 27, 28), (28, 38, 48, 58, 68, 78, 88, 98), (91, 92, 93, 94, 95, 96, 97, 98), (21, 31, 41, 51, 61, 71, 81, 91)]
 directions = [(-10, -11, -9), (1, -9, 11), (10, 11, 9), (-1, -11, 9), (12, 21, -12, -21, 19, -19, 8, -8), (-11, 11, -9, 9), (1, -1, 10, -10), (1, -1, 10, -10, -11, 11, -9, 9)]
 valid_keys = (21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 51, 52, 53, 54, 55, 56, 57, 58, 61, 62, 63, 64, 65, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 78, 81, 82, 83, 84, 85, 86, 87, 88, 91, 92, 93, 94, 95, 96, 97, 98)
@@ -39,25 +38,24 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
 
     def move(self, move):
         val, board, pcs = self.score, self.board[:], self.pieces[:]
-        pc_key = self.__get_key(pcs, [self.turn, board[move[0]][1], move[0], 0])
+        pc_key = self.get_key(pcs, [self.turn, board[move[0]][1], move[0], 0])
         if board[move[0]][1] in (0, 1, 2, 3) and move[1] in promotion[board[move[0]][0]]:
             board[move[0]] = (board[move[0]][0], 6, board[move[0]][2])
-            if self.turn in (0, 3): val += (pvs[6] - pvs[0])
-            else: val -= (pvs[6] - pvs[0])
+            if self.turn in (0, 3): val += (evala.pvs[6] - evala.pvs[0])
+            else: val -= (evala.pvs[6] - evala.pvs[0])
         pcs[pc_key] = [self.turn, board[move[0]][1], move[1], 0]
         if move[2] == 1:
-            dead_key = self.__get_key(pcs, [board[move[1]][0], board[move[1]][1], board[move[1]][2], 0])
+            dead_key = self.get_key(pcs, [board[move[1]][0], board[move[1]][1], board[move[1]][2], 0])
             pcs[dead_key] = [board[move[1]][0], board[move[1]][1], board[move[1]][2], 1]
-            if self.turn in (0, 3): val += pvs[board[move[1]][1]]
-            else: val -= pvs[board[move[1]][1]]
+            if self.turn in (0, 3): val += evala.pvs[board[move[1]][1]]
+            else: val -= evala.pvs[board[move[1]][1]]
         board[move[1]] = (board[move[0]][0], board[move[0]][1], move[1])
         board[move[0]] = 0
         return Position(board, val, (self.turn + 1) % 4, pcs, move[3])
 
-    def __get_key(self, array, val):
+    def get_key(self, array, val):
         for key, value in enumerate(array): 
-            if val == value: 
-                return key
+            if val == value: return key
         return False
 
     def render(self):
