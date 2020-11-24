@@ -39,6 +39,11 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
     def move(self, move):
         val, board, pcs = self.score, self.board[:], self.pieces[:]
         pc_key = self.get_key(pcs, [self.turn, board[move[0]][1], move[0], 0])
+        if board[move[0]][1] in (0, 1, 2, 3, 4, 5, 6):
+            if board[move[0]][1] in (0, 1, 2, 3): ost_key = 0
+            else: ost_key = board[move[0]][1] - 3
+            if board[move[0]][0] in (0, 3): val += (evala.ost[board[move[0]][0]][ost_key][move[1]] - evala.ost[board[move[0]][0]][ost_key][move[0]])
+            else: val -= (evala.ost[board[move[0]][0]][ost_key][move[1]] - evala.ost[board[move[0]][0]][ost_key][move[0]])
         if board[move[0]][1] in (0, 1, 2, 3) and move[1] in promotion[board[move[0]][0]]:
             board[move[0]] = (board[move[0]][0], 6, board[move[0]][2])
             if self.turn in (0, 3): val += (evala.pvs[6] - evala.pvs[0])
@@ -47,6 +52,11 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
         if move[2] == 1:
             dead_key = self.get_key(pcs, [board[move[1]][0], board[move[1]][1], board[move[1]][2], 0])
             pcs[dead_key] = [board[move[1]][0], board[move[1]][1], board[move[1]][2], 1]
+            if move[1]][1] in (0, 1, 2, 3, 4, 5, 6):
+                if move[1]][1] in (0, 1, 2, 3): ost_key = 0
+                else: ost_key = move[0]][1] - 3
+                if board[move[1]][0] in (0, 3): val -= evala.ost[board[move[1]][0]][ost_key][move[1]]
+                else: val += evala.ost[board[move[1]][0]][ost_key][move[1]]
             if self.turn in (0, 3): val += evala.pvs[board[move[1]][1]]
             else: val -= evala.pvs[board[move[1]][1]]
         board[move[1]] = (board[move[0]][0], board[move[0]][1], move[1])
