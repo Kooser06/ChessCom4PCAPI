@@ -63,6 +63,19 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
         board[move[0]] = 0
         return Position(board, val, (self.turn + 1) % 4, pcs, move[3])
 
+    def hash(self):
+        h = 0
+        for i in range(8):
+            x = 20
+            for j in range(8):
+                k = 1
+                if self.board[(x + j)] != 0:
+                    piece = indexing(self.board[(x + j)])
+                    h ^= zobTable[i][j][piece]
+                k += 1
+            x += 10
+        return h
+
     def get_key(self, array, val):
         for key, value in enumerate(array): 
             if val == value: return key
