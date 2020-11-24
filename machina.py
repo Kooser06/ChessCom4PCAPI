@@ -86,6 +86,8 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
 ###############################################################################
 # Search Logic
 ###############################################################################
+zobTable = [[[random.randint(1,2**64 - 1) for i in range(20)]for j in range(8)]for k in range(8)]
+
 class Searcher:
     def __init__(self):
         self.history = set()
