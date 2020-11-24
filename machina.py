@@ -70,7 +70,7 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
             for j in range(8):
                 k = 1
                 if self.board[(x + j)] != 0:
-                    piece = indexing(self.board[(x + j)])
+                    piece = extras.indexing(self.board[(x + j)])
                     h ^= zobTable[i][j][piece]
                 k += 1
             x += 10
