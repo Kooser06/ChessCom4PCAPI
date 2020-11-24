@@ -94,7 +94,7 @@ class Searcher:
         self.nodes = 0
 
     def bound(self, position, history=()):
-        self.history = set(history)
+        self.history = history
         best_move = []
         positive_team = (position.turn in (0, 3))
         if positive_team: best_val = 999999
