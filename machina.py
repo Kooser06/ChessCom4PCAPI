@@ -54,7 +54,7 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
             pcs[dead_key] = [board[move[1]][0], board[move[1]][1], board[move[1]][2], 1]
             if board[move[1]][1] in (0, 1, 2, 3, 4, 5, 6):
                 if board[move[1]][1] in (0, 1, 2, 3): ost_key = 0
-                else: ost_key = move[0]][1] - 3
+                else: ost_key = board[move[1]][1] - 3
                 if board[move[1]][0] in (0, 3): val -= evala.ost[board[move[1]][0]][ost_key][move[1]]
                 else: val += evala.ost[board[move[1]][0]][ost_key][move[1]]
             if self.turn in (0, 3): val += evala.pvs[board[move[1]][1]]
