@@ -86,70 +86,38 @@ class Position(namedtuple('Position', 'board score turn pieces is_final')):
 ###############################################################################
 # Search Logic
 ###############################################################################
-upper, lower, exact = 1, -1, 0
-Entry = namedtuple('Entry', 'value valid depth flag')
-
 class Searcher:
     def __init__(self):
-        self.tp_score = {}
         self.history = set()
         self.nodes = 0
 
     def bound(self, position, history=()):
-        self.nodes = 0
-        self.history = history
+        self.history = set(history)
         best_move = []
-        for depth in range(1, 1000):
-            bestscore = -99999
-            best_move = []
-            for move in position.moves():
-                if position.turn in (0, 2): score = -self.search(position.move(move), 100000, -100000, depth - 1)
-                else: score = self.search(position.move(move), -100000, 100000, depth - 1)
-                if score > bestscore:
-                    bestscore = score
-                    best_move = move
-            yield depth, best_move, self.nodes
-
-    def lookup(self, position):
-        return self.tp_score.get((position), Entry(0, False, 0, 0)) # get the transposition table entry.
-
-    def add(self, position, entry):
-        self.tp_score[position] = entry # store the transposition table entry.
+        positive_team = (position.turn in (0, 3))
+        if positive_team: best_val = 999999
+        else: best_val = -999999
+        for move in position.moves():
+            new_val = self.search(position.move(move), -300000, 300000, depth);
+            if (positive_team and new_val < best_val) or (not positive_team and new_val > best_val):
+                best_move = move
+                best_val = new_val
+        return [best_move, self.nodes]
 
     def search(self, position, alpha, beta, depth, root=True):
         self.nodes += 1
-        alphaOriginal = alpha
-        entry = self.lookup(position)
-        if entry.valid and entry.depth >= depth:
-            if entry.flag == exact: return entry.value
-            elif entry.flag == lower: alpha = max(alpha, entry.value)
-            elif entry.flag == upper: beta = min(beta, entry.value)
-            if alpha >= beta: return entry.value
-        if position in history and not root: return 0 # prevent a three-fold repetition moves when the engine is winning.
-        bestscore = -99999
-        if depth == 0: return self.quiesce(position, alpha, beta);
-        for move in position.moves:
-            if position.turn in (0, 2): score = -self.search(position.move(move), -beta, -alpha, depth - 1, False)
-            else: score = self.search(position.move(move), alpha, beta, depth - 1, False)
-            if score >= beta: return score # fail-soft beta-cutoff
-            if score > bestscore:
-                bestscore = score
-                if score > alpha: alpha = score
-        if value <= alphaOriginal: flag = upper
-        elif value >= beta: flag = lower
-        else: flag = exact
-        self.add(position, Entry(value, True, depth, flag))
-        return bestscore
-
-    def quiesce(self, position, alpha, beta):
-        if position.is_final: return position.score # this position is final so just return the evaluation.
-        stand_pat = position.score
-        if stand_pat >= beta: return beta
-        if alpha < stand_pat: alpha = stand_pat
-        for move in position.moves:
-            if move[2] != 1: continue # continue through the moves until we encounter another capture.
-            if position.turn in (0, 2): score = -self.quiesce(position.move(move), -beta, -alpha)
-            else: score = self.quiesce(position.move(move), alpha, beta)
-            if score >= beta: return beta
-            if score > alpha: alpha = score
-        return alpha
+        if not root and position in self.history: return 0
+        if depth == 0 or position.is_final: return -position.score
+        if position.turn in (0, 3):
+            best = 999999
+            for move in position.moves():
+                best = min(best, self.search(position.move(move), alpha, beta, depth - 1, False))
+                beta = min(beta, best)
+                if beta <= alpha: return best
+        else:
+            best = -999999;
+            for move in position.moves():
+                best = max(best, self.search(position.move(move), alpha, beta, depth - 1, False))
+                alpha = max(alpha, best)
+                if beta <= alpha: return best
+        return best
